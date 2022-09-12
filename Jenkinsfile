@@ -11,5 +11,12 @@ pipeline {
                 sh 'mvn package' 
             }
         }
+        stage('Upload') { 
+            steps {
+                withAWS(region: 'us-east-2') {
+                    s3Upload(file: 'target/api-0.0.1-SNAPSHOT.war', bucket: "${BUCKET_NAME}", path: "${BUILD_NUMBER}-api.war")
+                }
+            }
+        }
     }
 }
