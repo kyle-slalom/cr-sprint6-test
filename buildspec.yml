@@ -1,6 +1,9 @@
-version: 0.1
+version: 0.2
 
 phases:
+  install:
+    runtime-versions:
+      java: corretto17
   build:
     commands:
       - echo Build started on `date`
@@ -12,3 +15,4 @@ phases:
 artifacts:
   files:
     - target/api-0.0.1-SNAPSHOT.war
+  discard-paths: yes
