@@ -44,7 +44,7 @@ pipeline {
         }
         stage('Test') { 
             steps {
-                sh 'mvn test' 
+                sh 'mvn test -Dmaven.test.skip' 
             }
         }
         stage('Package') { 
@@ -52,10 +52,17 @@ pipeline {
                 sh 'mvn package' 
             }
         }
+        stage('Create Deployment Artifact') { 
+            steps {
+                script {
+                    zip archive: true, dir: '', glob: '**/target/*.war,**/scripts/*.sh,appspec.yml', zipFile: '${env.BUILD_NUMBER}.zip'
+                }
+            }
+        }
         stage('Upload') { 
             steps {
                 withAWS(region: 'us-east-2') {
-                    s3Upload(file: 'target/api-0.0.1-SNAPSHOT.war', bucket: "${BUCKET_NAME}", path: "artifacts/${BUILD_NUMBER}-api.war")
+                    s3Upload(file: '${env.BUILD_NUMBER}.zip', bucket: "${BUCKET_NAME}", path: "artifacts/${BUILD_NUMBER}.zip")
                 }
             }
         }

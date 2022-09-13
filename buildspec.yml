@@ -15,4 +15,6 @@ phases:
 artifacts:
   files:
     - target/api-0.0.1-SNAPSHOT.war
+    - scripts/*
+    - appspec.yml
   discard-paths: yes
