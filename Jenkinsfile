@@ -24,9 +24,14 @@ pipeline {
         stage('Upload') { 
             steps {
                 withAWS(region: 'us-east-2') {
-                    s3Upload(file: 'target/api-0.0.1-SNAPSHOT.war', bucket: "${BUCKET_NAME}", path: "${BUILD_NUMBER}-api.war")
+                    s3Upload(file: 'target/api-0.0.1-SNAPSHOT.war', bucket: "${BUCKET_NAME}", path: "artifacts/${BUILD_NUMBER}-api.war")
                 }
             }
+        }
+    }
+    post {
+        always {
+            junit 'target/surefire-reports/*.xml'
         }
     }
 }
