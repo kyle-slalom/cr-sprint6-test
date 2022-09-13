@@ -15,7 +15,7 @@
 	<name>api</name>
 	<description>Sprint 2 - Cloud Architecture</description>
 	<properties>
-		<java.version>17</java.version>
+		<java.version>11</java.version>
 	</properties>
 	<dependencies>
 		<dependency>
