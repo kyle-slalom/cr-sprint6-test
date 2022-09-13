@@ -39,21 +39,25 @@ pipeline {
     stages {
         stage ('Build') {
             steps {
+                updateGithubCommitStatus('Build started', 'PENDING')
                 sh 'mvn clean compile'
             }
         }
         stage('Test') { 
             steps {
-                sh 'mvn test -Dmaven.test.skip' 
+                updateGithubCommitStatus('Test started', 'PENDING')
+                sh 'mvn test' 
             }
         }
         stage('Package') { 
             steps {
-                sh 'mvn package' 
+                updateGithubCommitStatus('Package started', 'PENDING')
+                sh 'mvn package -Dmaven.test.skip' 
             }
         }
         stage('Create Deployment Artifact') { 
             steps {
+                updateGithubCommitStatus('Create Deployment Artifact started', 'PENDING')
                 script {
                     zip archive: true, dir: '', glob: '**/target/*.war,**/scripts/*.sh,appspec.yml', zipFile: '${env.BUILD_NUMBER}.zip'
                 }
@@ -61,8 +65,22 @@ pipeline {
         }
         stage('Upload') { 
             steps {
+                updateGithubCommitStatus('Upload started', 'PENDING')
                 withAWS(region: 'us-east-2') {
                     s3Upload(file: '${env.BUILD_NUMBER}.zip', bucket: "${BUCKET_NAME}", path: "artifacts/${BUILD_NUMBER}.zip")
+                }
+            }
+        }
+        stage('Deploy') { 
+            steps {
+                script {
+                    updateGithubCommitStatus('Deploying', 'PENDING')
+                }
+                withAWS(region: 'us-east-2') {
+                    codedeploy applicationName: "${APPLICATION_NAME}", deploymentGroupName: "${DEPLOYMENT_GROUP_NAME}", s3Location: [bucket: "${BUCKET_NAME}", bundleType: 'zip', eTag: '', key: "artifacts/${BUILD_NUMBER}.zip"]
+                }
+                script {
+                    updateGithubCommitStatus('Deployed', 'SUCCESS')
                 }
             }
         }
@@ -77,5 +95,6 @@ pipeline {
         always {
             junit 'target/surefire-reports/*.xml'
         }
+
     }
 }
