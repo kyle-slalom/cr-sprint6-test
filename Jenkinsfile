@@ -55,14 +55,14 @@ pipeline {
         stage('Create Deployment Artifact') { 
             steps {
                 script {
-                    zip archive: true, dir: '', glob: '**/target/*.war,**/scripts/*.sh,appspec.yml', zipFile: '${env.BUILD_NUMBER}.zip'
+                    zip archive: true, dir: '', glob: '**/target/*.war,**/scripts/*.sh,appspec.yml', zipFile: "${env.BUILD_NUMBER}.zip"
                 }
             }
         }
         stage('Upload') { 
             steps {
                 withAWS(region: 'us-east-2') {
-                    s3Upload(file: '${env.BUILD_NUMBER}.zip', bucket: "${BUCKET_NAME}", path: "artifacts/${BUILD_NUMBER}.zip")
+                    s3Upload(file: "${env.BUILD_NUMBER}.zip", bucket: "${BUCKET_NAME}", path: "artifacts/${BUILD_NUMBER}.zip")
                 }
             }
         }
