@@ -18,3 +18,7 @@ artifacts:
     - scripts/*
     - appspec.yml
   discard-paths: no
+  secondary-artifacts:
+    test-artifact:
+      files:
+        - target/sunfire-reports/*.xml
