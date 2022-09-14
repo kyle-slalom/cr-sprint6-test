@@ -37,18 +37,32 @@ pipeline {
         }
     }
     stages {
-        stage('Build') {
+        stage ('Build') {
+            steps {
+                sh 'mvn clean compile'
+            }
+        }
+        stage('Test') { 
+            steps {
+                sh 'mvn test' 
+            }
+        }
+        stage('Package') { 
+            steps {
+                sh 'mvn package -Dmaven.test.skip' 
+            }
+        }
+        stage('Create Deployment Artifact') { 
             steps {
                 script {
-                    codebuildResult = awsCodeBuild(
-                        projectName: "${APPLICATION_NAME}-codebuild", 
-                        region: 'us-east-2', 
-                        credentialsType: 'keys', 
-                        sourceControlType: 'project',
-                        sourceVersion: "${env.BRANCH_NAME}",
-                    )
-                    s3Bucket = codebuildResult.getArtifactsLocation().split(":::")[1].split("/")[0]
-                    s3Key = codebuildResult.getArtifactsLocation().split("/")[1]
+                    zip archive: true, dir: '', glob: '**/target/*.war,**/scripts/*.sh,appspec.yml', zipFile: "${env.BUILD_NUMBER}.zip"
+                }
+            }
+        }
+        stage('Upload') { 
+            steps {
+                withAWS(region: 'us-east-2') {
+                    s3Upload(file: "${env.BUILD_NUMBER}.zip", bucket: "${BUCKET_NAME}", path: "artifacts/${BUILD_NUMBER}.zip")
                 }
             }
         }
@@ -59,8 +73,8 @@ pipeline {
                         applicationName: "${APPLICATION_NAME}", 
                         deploymentGroupName: "${DEPLOYMENT_GROUP_NAME}",
                         description: "Deploying ${env.BUILD_NUMBER}",
-                        s3Bucket: "${s3Bucket}",
-                        s3Key: "${s3Key}",
+                        s3Bucket: "${BUCKET_NAME}",
+                        s3Key: "artifacts/${BUILD_NUMBER}.zip",
                         s3BundleType: "zip",
                         waitForCompletion: true
                     )
@@ -75,5 +89,9 @@ pipeline {
         failure {
             updateGithubCommitStatus('Build Failed', 'FAILURE')
         }
+        always {
+            junit 'target/surefire-reports/*.xml'
+        }
+
     }
 }
