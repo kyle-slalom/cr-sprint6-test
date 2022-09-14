@@ -6,12 +6,13 @@ phases:
       java: corretto11
   build:
     commands:
-      - echo Build started on `date`
+      - echo Build and testing started on `date`
+      - mvn compile
       - mvn test
   post_build:
     commands:
       - echo Build completed on `date`
-      - mvn package
+      - mvn package -Dmaven.test.skip
 artifacts:
   files:
     - target/api-0.0.1-SNAPSHOT.war
@@ -19,6 +20,7 @@ artifacts:
     - appspec.yml
   discard-paths: no
   secondary-artifacts:
-    test-artifact:
+    reports:
       files:
-        - target/sunfire-reports/*.xml
+        - target/surefire-reports/*.xml
+      discard-paths: yes

@@ -49,6 +49,17 @@ pipeline {
                     )
                     s3Bucket = codebuildResult.getArtifactsLocation().split(":::")[1].split("/")[0]
                     s3Key = codebuildResult.getArtifactsLocation().split("/")[1]
+                    echo "s3Bucket: ${s3Bucket}"
+                    echo "s3Key: ${s3Key}"
+                }
+            }
+        }
+        stage('Test') {
+            steps {
+                withAWS(region: 'us-east-2') {
+                    s3Download(bucket: "${s3Bucket}", path: "${s3Key}/reports", file: "reports.zip")
+                    unzip zipFile: "reports.zip", dir: "reports"
+                    junit "reports/*.xml"
                 }
             }
         }
@@ -60,7 +71,7 @@ pipeline {
                         deploymentGroupName: "${DEPLOYMENT_GROUP_NAME}",
                         description: "Deploying ${env.BUILD_NUMBER}",
                         s3Bucket: "${s3Bucket}",
-                        s3Key: "${s3Key}",
+                        s3Key: "${s3Key}/${APPLICATION_NAME}-codebuild",
                         s3BundleType: "zip",
                         waitForCompletion: true
                     )
