@@ -9,7 +9,6 @@ def getCommitSha() {
 }
 
 def updateGithubCommitStatus(String message, String state) {
-  // workaround https://issues.jenkins-ci.org/browse/JENKINS-38674
   repoUrl = getRepoURL()
   commitSha = getCommitSha()
 
@@ -63,18 +62,18 @@ pipeline {
         }
         stage('Upload') { 
             steps {
-                withAWS(region: 'us-east-2') {
+                withAWS(region: "${AWS_REGION}") {
                     s3Upload(file: "${env.BUILD_NUMBER}.zip", bucket: "${BUCKET_NAME}", path: "artifacts/${BUILD_NUMBER}.zip")
                 }
             }
         }
         stage('Deploy') { 
             steps {
-                withAWS(region: 'us-east-2') {
+                withAWS(region: "${AWS_REGION}") {
                     createDeployment(
                         applicationName: "${APPLICATION_NAME}", 
                         deploymentGroupName: "${DEPLOYMENT_GROUP_NAME}",
-                        description: "Deploying ${env.BUILD_NUMBER}",
+                        description: "Deploying ${BUILD_NUMBER}",
                         s3Bucket: "${BUCKET_NAME}",
                         s3Key: "artifacts/${BUILD_NUMBER}.zip",
                         s3BundleType: "zip",
